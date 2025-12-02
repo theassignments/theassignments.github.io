@@ -1,110 +1,204 @@
- <!DOCTYPE html>
-<html>
+ <!doctype html>
+<html lang="hi">
 <head>
-  <title>Signup - The Assignments</title>
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Submit Assignment — TheAssignment</title>
   <style>
-    body {
-      font-family: Arial;
-      background: #e8f0fe;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-
-    .form-box {
-      background: white;
-      width: 350px;
-      padding: 35px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      text-align: center;
-    }
-
-    h2 {
-      margin-bottom: 20px;
-      color: #333;
-    }
-
-    input {
-      width: 90%;
-      padding: 12px;
-      margin: 10px 0;
-      border: 1px solid #aaa;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #4CAF50;
-      border: none;
-      color: white;
-      font-size: 16px;
-      border-radius: 8px;
-      margin-top: 15px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      opacity: 0.85;
-    }
-
-    a {
-      display: block;
-      margin-top: 15px;
-      font-size: 14px;
-    }
-
+    body{margin:0;font-family:Inter,Arial;background:#f5f7fb;color:#111;padding:18px}
+    .wrap{max-width:1000px;margin:12px auto;background:white;padding:18px;border-radius:12px;box-shadow:0 10px 30px rgba(10,20,40,0.04)}
+    h2{margin-top:0}
+    form{display:grid;gap:10px}
+    input,textarea,select{padding:10px;border-radius:8px;border:1px solid #e6eef8}
+    .row{display:flex;gap:10px}
+    .col{flex:1}
+    .btn{background:#2b8aef;color:white;padding:10px;border-radius:8px;border:none;cursor:pointer}
+    .small{font-size:13px;color:#6b7280}
+    .ad{background:#fff7f0;border-radius:8px;padding:12px;border:1px dashed #ffd2a6;margin-top:10px;text-align:center}
+    .orders{margin-top:16px}
+    .order{padding:10px;border-radius:8px;background:#fff;border:1px solid #eef2f8;margin-bottom:10px}
+    @media(max-width:800px){.row{flex-direction:column}}
   </style>
-
 </head>
 <body>
+  <div class="wrap">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2>Submit Your Assignment</h2>
+      <div>
+        <span id="userInfo" class="small"></span>
+        <button id="btnSignOut" style="display:none;margin-left:10px" class="btn" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
 
-<div class="form-box">
-  <h2>Create Account</h2>
+    <p class="small">Detailed instructions de — jitna clear hoga utna accha result milega.</p>
 
-  <input type="email" id="email" placeholder="Enter Email">
-  <input type="password" id="password" placeholder="Enter Password">
+    <form id="submitForm" onsubmit="submitOrder(event)">
+      <input id="title" placeholder="Assignment title (eg: Microeconomics Assignment chapter 3)" required />
+      <div class="row">
+        <div class="col">
+          <select id="subject" required>
+            <option value="">Select Subject</option>
+            <option>Economics</option>
+            <option>Computer Science</option>
+            <option>Business</option>
+            <option>Physics</option>
+          </select>
+        </div>
+        <div class="col">
+          <input id="pages" type="number" placeholder="Pages (eg: 10)" />
+        </div>
+      </div>
 
-  <button id="signupBtn">Signup</button>
+      <label class="small">Deadline</label>
+      <input id="deadline" type="datetime-local" />
 
-  <a href="login.html">Already have an account? Login</a>
-</div>
+      <label>Detailed instructions (resources, referencing style, images etc.)</label>
+      <textarea id="instructions" rows="6" placeholder="Give full details..."></textarea>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword } 
-  from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+      <label>Upload files (pdf/docx/png/jpg) — max 20MB each</label>
+      <input id="files" type="file" multiple accept=".pdf,.doc,.docx,image/*" />
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAwRT7JwLOXgpaA2qCfGKr2b6-yugEFryY",
-    authDomain: "theassignments-2a79c.firebaseapp.com",
-    projectId: "theassignments-2a79c",
-    storageBucket: "theassignments-2a79c.firebasestorage.app",
-    messagingSenderId: "32847781306",
-    appId: "1:32847781306:web:875c3579275afa00e49183",
-    measurementId: "G-TGCREW4P5R"
-  };
+      <div class="row">
+        <div class="col">
+          <select id="deliveryOpt">
+            <option value="digital">Digital Copy Only</option>
+            <option value="home">Home Delivery</option>
+            <option value="pickup">Pickup Point</option>
+          </select>
+        </div>
+        <div class="col">
+          <input id="deliveryAddr" placeholder="Delivery address (if home delivery)" />
+        </div>
+      </div>
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="btn" type="submit">Submit Assignment</button>
+        <div class="small" id="statusText"></div>
+      </div>
 
-  document.getElementById("signupBtn").addEventListener("click", () => {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+      <div class="ad">Ad space - Promote your tutoring service.</div>
+    </form>
 
-    createUserWithEmailAndPassword(auth, email, password)
-      .then(() => {
-        alert("Signup Successful!");
-        window.location.href = "login.html";
-      })
-      .catch(error => alert(error.message));
-  });
-</script>
+    <div class="orders">
+      <h3>Your Orders</h3>
+      <div id="ordersList" class="small">Login & submit to see your orders here.</div>
+    </div>
+  </div>
 
+  <!-- Firebase SDKs (v8) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+
+  <script>
+    // *** Firebase config (your provided config) ***
+    const firebaseConfig = {
+      apiKey: "AIzaSyAwRT7JwLOXgpaA2qCfGKr2b6-yugEFryY",
+      authDomain: "theassignments-2a79c.firebaseapp.com",
+      projectId: "theassignments-2a79c",
+      storageBucket: "theassignments-2a79c.firebasestorage.app",
+      messagingSenderId: "32847781306",
+      appId: "1:32847781306:web:875c3579275afa00e49183",
+      measurementId: "G-TGCREW4P5R"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // Auth state
+    auth.onAuthStateChanged(user => {
+      if(user){
+        document.getElementById('userInfo').innerText = user.email;
+        document.getElementById('btnSignOut').style.display = 'inline-block';
+        // load user's orders
+        loadOrders(user.uid);
+      } else {
+        document.getElementById('userInfo').innerText = 'Not signed in';
+        document.getElementById('btnSignOut').style.display = 'none';
+        document.getElementById('ordersList').innerHTML = 'Login and submit your first order.';
+      }
+    });
+
+    function signOut(){ auth.signOut(); location.href='signup.html'; }
+
+    // Submit order: upload files to Storage, then create order doc
+    async function submitOrder(e){
+      e.preventDefault();
+      const user = auth.currentUser;
+      if(!user){ alert('Please login first (signup.html).'); location.href='signup.html'; return; }
+
+      const title = document.getElementById('title').value.trim();
+      const subject = document.getElementById('subject').value;
+      const pages = document.getElementById('pages').value || null;
+      const deadline = document.getElementById('deadline').value || null;
+      const instructions = document.getElementById('instructions').value.trim();
+      const deliveryOpt = document.getElementById('deliveryOpt').value;
+      const deliveryAddr = document.getElementById('deliveryAddr').value.trim();
+      const filesInput = document.getElementById('files');
+      const files = filesInput.files;
+
+      if(!title || !subject){ alert('Please provide title and subject.'); return; }
+
+      document.getElementById('statusText').innerText = 'Uploading files...';
+
+      try{
+        const uploadedFiles = [];
+        const basePath = `orders/${user.uid}/${Date.now()}`;
+        for(let i=0;i<files.length;i++){
+          const f = files[i];
+          const ref = storage.ref().child(`${basePath}/${encodeURIComponent(f.name)}`);
+          const snap = await ref.put(f);
+          const url = await snap.ref.getDownloadURL();
+          uploadedFiles.push({name: f.name, url, size: f.size});
+        }
+
+        // Create order document
+        const orderData = {
+          userId: user.uid,
+          userEmail: user.email || null,
+          title, subject, pages: pages ? Number(pages) : null,
+          deadline: deadline ? new Date(deadline) : null,
+          instructions,
+          deliveryOpt, deliveryAddr,
+          files: uploadedFiles,
+          status: 'received',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        const docRef = await db.collection('orders').add(orderData);
+        document.getElementById('statusText').innerText = 'Order submitted! Order ID: ' + docRef.id;
+        // reset form
+        document.getElementById('submitForm').reset();
+      }catch(err){
+        console.error(err);
+        document.getElementById('statusText').innerText = 'Error: ' + err.message;
+      }
+    }
+
+    // Load orders for current user (real-time)
+    function loadOrders(uid){
+      const q = db.collection('orders').where('userId','==',uid).orderBy('createdAt','desc');
+      q.onSnapshot(snapshot => {
+        const list = document.getElementById('ordersList');
+        list.innerHTML = '';
+        if(snapshot.empty){ list.innerHTML = 'No orders yet.'; return; }
+        snapshot.forEach(doc => {
+          const o = doc.data();
+          const created = o.createdAt ? (o.createdAt.toDate ? o.createdAt.toDate().toLocaleString() : o.createdAt) : '';
+          const div = document.createElement('div');
+          div.className = 'order';
+          div.innerHTML = `<strong>${o.title}</strong> <div style="color:#6b7280;font-size:13px">Status: ${o.status} • ${created}</div>
+                          <div style="margin-top:6px;color:#374151;font-size:14px">${o.subject} • Pages: ${o.pages || '-'} • Delivery: ${o.deliveryOpt}</div>
+                          ${o.files && o.files.length ? `<div style="margin-top:8px"><em>Files:</em> ${o.files.map(f=>`<a href="${f.url}" target="_blank">${escapeHtml(f.name)}</a>`).join(' • ')}</div>` : ''}`;
+          list.appendChild(div);
+        });
+      }, err => {
+        document.getElementById('ordersList').innerText = 'Could not load orders: ' + err.message;
+      });
+    }
+
+    function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  </script>
 </body>
 </html>
