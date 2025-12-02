@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html>
 <head>
   <title>Login - The Assignments</title>
@@ -16,23 +16,27 @@
 <a href="signup.html">Create New Account</a>
 
 <script type="module">
+  // Firebase SDK import
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword } 
   from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
 
+  // UPDATED Firebase Config
   const firebaseConfig = {
-    apiKey: "AIzaSyAwR7JLwOXgpaA2qCfGKr2b6-yugEfFry",
+    apiKey: "AIzaSyAwRT7JwLOXgpaA2qCfGKr2b6-yugEFryY",
     authDomain: "theassignments-2a79c.firebaseapp.com",
     projectId: "theassignments-2a79c",
-    storageBucket: "theassignments-2a79c.appspot.com",
+    storageBucket: "theassignments-2a79c.firebasestorage.app",
     messagingSenderId: "32847781306",
-    appId: "1:32847781306:web:875c3597275afa00e49183",
-    measurementId: "G-TGCREW45PR"
+    appId: "1:32847781306:web:875c3579275afa00e49183",
+    measurementId: "G-TGCREW4P5R"
   };
 
+  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
+  // Login Button Click
   document.getElementById("loginBtn").addEventListener("click", () => {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
@@ -40,9 +44,11 @@
     signInWithEmailAndPassword(auth, email, password)
       .then(() => {
         alert("Login Successful!");
-        window.location.href = "index.html";
+        window.location.href = "index.html";  // Redirect to homepage
       })
-      .catch(error => alert(error.message));
+      .catch(error => {
+        alert(error.message);
+      });
   });
 </script>
 
