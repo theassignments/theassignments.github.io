@@ -1,11 +1,36 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html>
 <head>
   <title>The Assignments</title>
 </head>
 <body>
-  <h1>Welcome to The Assignments Website!</h1>
-  <p>Your website is now live on GitHub Pages.</p>
+
+<h1>Welcome to The Assignments</h1>
+
+<!-- Buttons -->
+<button onclick="window.location.href='signup.html'">Signup</button>
+<button onclick="window.location.href='login.html'">Login</button>
+
+<!-- Firebase Connect -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-analytics.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAwR7JLwOXgpaA2qCfGKr2b6-yugEfFry",
+    authDomain: "theassignments-2a79c.firebaseapp.com",
+    projectId: "theassignments-2a79c",
+    storageBucket: "theassignments-2a79c.appspot.com",
+    messagingSenderId: "32847781306",
+    appId: "1:32847781306:web:875c3597275afa00e49183",
+    measurementId: "G-TGCREW45PR"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+
 </body>
 </html>
+
 
