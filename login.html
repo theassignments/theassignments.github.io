@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login - The Assignments</title>
+</head>
+<body>
+
+<h2>Login</h2>
+
+<input type="email" id="email" placeholder="Enter Email"><br><br>
+<input type="password" id="password" placeholder="Enter Password"><br><br>
+
+<button id="loginBtn">Login</button>
+
+<br><br>
+<a href="signup.html">Create New Account</a>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword } 
+  from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAwR7JLwOXgpaA2qCfGKr2b6-yugEfFry",
+    authDomain: "theassignments-2a79c.firebaseapp.com",
+    projectId: "theassignments-2a79c",
+    storageBucket: "theassignments-2a79c.appspot.com",
+    messagingSenderId: "32847781306",
+    appId: "1:32847781306:web:875c3597275afa00e49183",
+    measurementId: "G-TGCREW45PR"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  document.getElementById("loginBtn").addEventListener("click", () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    signInWithEmailAndPassword(auth, email, password)
+      .then(() => {
+        alert("Login Successful!");
+        window.location.href = "index.html";
+      })
+      .catch(error => alert(error.message));
+  });
+</script>
+
+</body>
+</html>
