@@ -121,13 +121,13 @@
       }
     });
 
-    function signOut(){ auth.signOut(); location.href='signup.html'; }
+    function signOut(){ auth.signOut(); location.href='login-signup.html'; }
 
     // Submit order: upload files to Storage, then create order doc
     async function submitOrder(e){
       e.preventDefault();
       const user = auth.currentUser;
-      if(!user){ alert('Please login first (signup.html).'); location.href='signup.html'; return; }
+      if(!user){ alert('Please login first (login-signup.html).'); location.href='login-signup.html'; return; }
 
       const title = document.getElementById('title').value.trim();
       const subject = document.getElementById('subject').value;
