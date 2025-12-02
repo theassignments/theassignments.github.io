@@ -2,21 +2,72 @@
 <html>
 <head>
   <title>The Assignments</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      text-align: center;
+      width: 350px;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 25px;
+    }
+
+    button {
+      width: 120px;
+      padding: 10px;
+      margin: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .signup-btn {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .login-btn {
+      background-color: #2196F3;
+      color: white;
+    }
+
+    button:hover {
+      opacity: 0.8;
+    }
+
+  </style>
+
 </head>
 <body>
 
-<h1>Welcome to The Assignments</h1>
+  <div class="container">
+    <h1>The Assignments</h1>
 
-<!-- Buttons -->
-<button onclick="window.location.href='signup.html'">Signup</button>
-<button onclick="window.location.href='login.html'">Login</button>
+    <button class="signup-btn" onclick="window.location.href='signup.html'">Signup</button>
+    <button class="login-btn" onclick="window.location.href='login.html'">Login</button>
+  </div>
 
-<!-- Firebase Connect -->
 <script type="module">
-  // Import Firebase
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
 
-  // Firebase Configuration
   const firebaseConfig = {
     apiKey: "AIzaSyAwRT7JwLOXgpaA2qCfGKr2b6-yugEFryY",
     authDomain: "theassignments-2a79c.firebaseapp.com",
@@ -27,7 +78,6 @@
     measurementId: "G-TGCREW4P5R"
   };
 
-  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
 </script>
 
