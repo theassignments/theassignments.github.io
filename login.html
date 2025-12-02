@@ -1,110 +1,117 @@
- <!DOCTYPE html>
-<html>
+ <!doctype html>
+<html lang="hi">
 <head>
-  <title>Login - The Assignments</title>
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Signup / Login — TheAssignment</title>
   <style>
-    body {
-      font-family: Arial;
-      background: #e8f0fe;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-
-    .form-box {
-      background: white;
-      width: 350px;
-      padding: 35px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      text-align: center;
-    }
-
-    h2 {
-      margin-bottom: 20px;
-      color: #333;
-    }
-
-    input {
-      width: 90%;
-      padding: 12px;
-      margin: 10px 0;
-      border: 1px solid #aaa;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #2196F3;
-      border: none;
-      color: white;
-      font-size: 16px;
-      border-radius: 8px;
-      margin-top: 15px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      opacity: 0.85;
-    }
-
-    a {
-      display: block;
-      margin-top: 15px;
-      font-size: 14px;
-    }
-
+    body{margin:0;font-family:Inter,Arial;background:#f3f7fb;display:flex;align-items:center;justify-content:center;height:100vh}
+    .box{width:920px;background:#fff;border-radius:12px;display:flex;overflow:hidden;box-shadow:0 12px 40px rgba(10,20,40,0.06)}
+    .left{flex:1;padding:34px;background:linear-gradient(180deg,#eef8ff,#fff)}
+    .right{flex:1;padding:34px}
+    input,textarea{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:1px solid #e6eef8}
+    .btn{background:#2b8aef;color:#fff;padding:10px;border-radius:8px;border:none;cursor:pointer;margin-top:10px}
+    .muted{color:#6b7280;font-size:13px}
+    .link{color:#2b8aef;cursor:pointer}
   </style>
-
 </head>
 <body>
+  <div class="box">
+    <div class="left">
+      <h2>Create Account</h2>
+      <p class="muted">Signup with email and password. Address optional for delivery.</p>
 
-<div class="form-box">
-  <h2>Login</h2>
+      <input id="name" placeholder="Full name" />
+      <input id="email" placeholder="Email" />
+      <input id="phone" placeholder="Phone (optional)" />
+      <input id="password" type="password" placeholder="Password (min 6 chars)" />
+      <textarea id="address" rows="3" placeholder="Address (for delivery)"></textarea>
+      <button class="btn" onclick="handleSignup()">Create Account</button>
 
-  <input type="email" id="email" placeholder="Enter Email">
-  <input type="password" id="password" placeholder="Enter Password">
+      <p class="muted" style="margin-top:10px">Already have an account? <span class="link" onclick="showLogin()">Login</span></p>
+      <p id="signupMsg" class="muted"></p>
+    </div>
 
-  <button id="loginBtn">Login</button>
+    <div class="right" id="loginPanel">
+      <h2>Login</h2>
+      <p class="muted">Login with your email</p>
+      <input id="loginEmail" placeholder="Email" />
+      <input id="loginPass" type="password" placeholder="Password" />
+      <button class="btn" onclick="handleLogin()">Login</button>
+      <p id="loginMsg" class="muted"></p>
+    </div>
+  </div>
 
-  <a href="signup.html">Create New Account</a>
-</div>
+  <!-- Firebase SDKs (v8) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword } 
-  from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+  <script>
+    // *** Your Firebase config (you provided) ***
+    const firebaseConfig = {
+      apiKey: "AIzaSyAwRT7JwLOXgpaA2qCfGKr2b6-yugEFryY",
+      authDomain: "theassignments-2a79c.firebaseapp.com",
+      projectId: "theassignments-2a79c",
+      storageBucket: "theassignments-2a79c.firebasestorage.app",
+      messagingSenderId: "32847781306",
+      appId: "1:32847781306:web:875c3579275afa00e49183",
+      measurementId: "G-TGCREW4P5R"
+    };
+    // init
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAwRT7JwLOXgpaA2qCfGKr2b6-yugEFryY",
-    authDomain: "theassignments-2a79c.firebaseapp.com",
-    projectId: "theassignments-2a79c",
-    storageBucket: "theassignments-2a79c.firebasestorage.app",
-    messagingSenderId: "32847781306",
-    appId: "1:32847781306:web:875c3579275afa00e49183",
-    measurementId: "G-TGCREW4P5R"
-  };
+    // Signup
+    async function handleSignup(){
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const password = document.getElementById('password').value;
+      const address = document.getElementById('address').value.trim();
+      document.getElementById('signupMsg').innerText = '';
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
+      if(!name || !email || password.length < 6){ document.getElementById('signupMsg').innerText = 'Name, valid email and password (>=6) required.'; return; }
 
-  document.getElementById("loginBtn").addEventListener("click", () => {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+      try{
+        const userCred = await auth.createUserWithEmailAndPassword(email, password);
+        const uid = userCred.user.uid;
+        // Save user profile in firestore
+        await db.collection('users').doc(uid).set({
+          name, email, phone, address, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        document.getElementById('signupMsg').innerText = 'Signup successful! Redirecting to submit page...';
+        setTimeout(()=> location.href = 'submit.html', 900);
+      }catch(err){
+        document.getElementById('signupMsg').innerText = 'Error: ' + err.message;
+      }
+    }
 
-    signInWithEmailAndPassword(auth, email, password)
-      .then(() => {
-        alert("Login Successful!");
-        window.location.href = "index.html";
-      })
-      .catch(error => alert(error.message));
-  });
-</script>
+    // Login
+    async function handleLogin(){
+      const email = document.getElementById('loginEmail').value.trim();
+      const pw = document.getElementById('loginPass').value;
+      document.getElementById('loginMsg').innerText = '';
+      try{
+        await auth.signInWithEmailAndPassword(email, pw);
+        document.getElementById('loginMsg').innerText = 'Login successful! Redirecting...';
+        setTimeout(()=> location.href = 'submit.html', 700);
+      }catch(err){
+        document.getElementById('loginMsg').innerText = 'Error: ' + err.message;
+      }
+    }
 
+    // Keep user signed in (optional)
+    auth.onAuthStateChanged(user => {
+      if(user){
+        // user is logged in — you can auto-redirect to submit page if desired
+        // Uncomment next line if you want to auto redirect logged-in users away from signup page:
+        // location.href = 'submit.html';
+      }
+    });
+
+    function showLogin(){ window.scrollTo({top:0,behavior:'smooth'}); }
+  </script>
 </body>
 </html>
