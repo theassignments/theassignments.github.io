@@ -183,7 +183,15 @@
       try{
         await auth.signInWithEmailAndPassword(email, pw);
         msg.innerText = "Login successful! Redirecting...";
-        setTimeout(()=> location.href="submit.html", 700);
+         
+if(email === "theassignment.admin@gmail.com"){
+    // Admin goes to admin panel
+    setTimeout(()=> location.href = 'admin.html', 500);
+} else {
+    // Normal users go to submit page
+    setTimeout(()=> location.href = 'submit.html', 500);
+}
+
 
       }catch(err){
         msg.innerText = "Error: " + err.message;
