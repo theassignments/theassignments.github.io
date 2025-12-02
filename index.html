@@ -1,85 +1,59 @@
- <!DOCTYPE html>
-<html>
+ <!doctype html>
+<html lang="hi">
 <head>
-  <title>The Assignments</title>
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TheAssignment — Home</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-
-    .container {
-      background: white;
-      padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      text-align: center;
-      width: 350px;
-    }
-
-    h1 {
-      color: #333;
-      margin-bottom: 25px;
-    }
-
-    button {
-      width: 120px;
-      padding: 10px;
-      margin: 10px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    .signup-btn {
-      background-color: #4CAF50;
-      color: white;
-    }
-
-    .login-btn {
-      background-color: #2196F3;
-      color: white;
-    }
-
-    button:hover {
-      opacity: 0.8;
-    }
-
+    :root{--accent:#2b8aef;--muted:#6b7280;--bg:#f5f7fb}
+    body{margin:0;font-family:Inter,Arial;background:var(--bg);color:#111}
+    .container{max-width:1100px;margin:28px auto;padding:20px}
+    header{display:flex;justify-content:space-between;align-items:center}
+    .logo{display:flex;gap:12px;align-items:center}
+    .logo .badge{width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#6fb8ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    nav a{margin-left:12px;color:var(--muted);text-decoration:none}
+    .hero{background:#fff;border-radius:12px;padding:18px;margin-top:18px;display:flex;gap:20px}
+    .card{background:#fff;padding:14px;border-radius:10px;box-shadow:0 6px 18px rgba(20,20,40,0.04)}
+    footer{margin-top:26px;color:var(--muted);text-align:center}
+    @media(max-width:800px){.hero{flex-direction:column}}
   </style>
-
 </head>
 <body>
-
   <div class="container">
-    <h1>The Assignments</h1>
+    <header>
+      <div class="logo">
+        <div class="badge">TA</div>
+        <div>
+          <div style="font-weight:700">TheAssignment</div>
+          <div style="font-size:13px;color:var(--muted)">Assignment service with delivery</div>
+        </div>
+      </div>
+      <nav>
+        <a href="signup.html">Signup / Login</a>
+        <a href="submit.html">Submit Assignment</a>
+      </nav>
+    </header>
 
-    <button class="signup-btn" onclick="window.location.href='signup.html'">Signup</button>
-    <button class="login-btn" onclick="window.location.href='login.html'">Login</button>
+    <div class="hero">
+      <div style="flex:1">
+        <h1 style="margin:0 0 6px 0">Assignment chahiye? Hum complete karke deliver kar denge.</h1>
+        <p style="margin:0;color:var(--muted)">Submit karo brief, upload karo files, payment & delivery options. Demo site — Firebase backend se connected.</p>
+        <div style="margin-top:12px">
+          <a href="submit.html" style="background:var(--accent);color:#fff;padding:10px 14px;border-radius:8px;text-decoration:none">Submit Assignment</a>
+        </div>
+      </div>
+
+      <div style="width:320px">
+        <div class="card">
+          <h3 style="margin-top:0">Ad slot</h3>
+          <p style="color:var(--muted)">Advertise here — local tutors, printing services.</p>
+        </div>
+      </div>
+    </div>
+
+    <footer>© <span id="yr"></span> TheAssignment</footer>
   </div>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyAwRT7JwLOXgpaA2qCfGKr2b6-yugEFryY",
-    authDomain: "theassignments-2a79c.firebaseapp.com",
-    projectId: "theassignments-2a79c",
-    storageBucket: "theassignments-2a79c.firebasestorage.app",
-    messagingSenderId: "32847781306",
-    appId: "1:32847781306:web:875c3579275afa00e49183",
-    measurementId: "G-TGCREW4P5R"
-  };
-
-  const app = initializeApp(firebaseConfig);
-</script>
-
+  <script>document.getElementById('yr').innerText = new Date().getFullYear();</script>
 </body>
 </html>
