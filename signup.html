@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html>
 <head>
   <title>Signup - The Assignments</title>
@@ -16,23 +16,27 @@
 <a href="login.html">Already have an account? Login</a>
 
 <script type="module">
+  // Import Firebase SDK
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword } 
   from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
 
+  // UPDATED Firebase Config
   const firebaseConfig = {
-    apiKey: "AIzaSyAwR7JLwOXgpaA2qCfGKr2b6-yugEfFry",
+    apiKey: "AIzaSyAwRT7JwLOXgpaA2qCfGKr2b6-yugEFryY",
     authDomain: "theassignments-2a79c.firebaseapp.com",
     projectId: "theassignments-2a79c",
-    storageBucket: "theassignments-2a79c.appspot.com",
+    storageBucket: "theassignments-2a79c.firebasestorage.app",
     messagingSenderId: "32847781306",
-    appId: "1:32847781306:web:875c3597275afa00e49183",
-    measurementId: "G-TGCREW45PR"
+    appId: "1:32847781306:web:875c3579275afa00e49183",
+    measurementId: "G-TGCREW4P5R"
   };
 
+  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
+  // Signup Button Click Event
   document.getElementById("signupBtn").addEventListener("click", () => {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
@@ -40,9 +44,11 @@
     createUserWithEmailAndPassword(auth, email, password)
       .then(() => {
         alert("Signup Successful!");
-        window.location.href = "login.html";
+        window.location.href = "login.html"; // Redirect to login page
       })
-      .catch(error => alert(error.message));
+      .catch(error => {
+        alert(error.message);
+      });
   });
 </script>
 
