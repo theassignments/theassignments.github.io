@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Signup / Login — TheAssignment</title>
+  <style>
+    :root{--accent:#2b8aef;--muted:#6b7280}
+    body{
+      margin:0;
+      font-family:Inter,Arial,system-ui;
+      background:#f3f7fb;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:100vh; /* safer than height:100vh on mobile */
+      padding:20px;
+    }
+    .box{
+      width:920px;
+      max-width:100%;
+      background:#fff;
+      border-radius:12px;
+      display:flex;
+      overflow:hidden;
+      box-shadow:0 12px 40px rgba(10,20,40,0.06);
+      gap:0;
+    }
+    .panel{
+      flex:1;
+      padding:34px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center; /* vertical center so button visible */
+    }
+    .left{ background:linear-gradient(180deg,#eef8ff,#fff) }
+    .right{ background: #ffffff }
+    input, textarea {
+      width:100%;
+      padding:10px;
+      margin-top:8px;
+      border-radius:8px;
+      border:1px solid #e6eef8;
+      box-sizing:border-box;
+      font-size:14px;
+    }
+    .btn{
+      background:var(--accent);
+      color:#fff;
+      padding:10px;
+      border-radius:8px;
+      border:none;
+      cursor:pointer;
+      margin-top:12px;
+      font-weight:600;
+      width:100%;
+      display:inline-block;
+      font-size:15px;
+    }
+    .muted{ color:var(--muted); font-size:13px; margin-top:8px }
+    .link{ color:var(--accent); cursor:pointer; text-decoration:underline; }
+    @media(max-width:800px){
+      .box{ flex-direction:column; }
+      .panel{ padding:20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="box" id="box">
+    <div class="panel left" id="signupPanel">
+      <h2>Create Account</h2>
+      <p class="muted">Signup with email and password. Address optional for delivery.</p>
+
+      <input id="name" placeholder="Full name" />
+      <input id="email" placeholder="Email" />
+      <input id="phone" placeholder="Phone (optional)" />
+      <input id="password" type="password" placeholder="Password (min 6 chars)" />
+      <textarea id="address" rows="3" placeholder="Address (for delivery)"></textarea>
+
+      <!-- Use type="button" here for JS handler, but visible always -->
+      <button class="btn" id="signupBtn" type="button" onclick="handleSignup()">Create Account</button>
+
+      <p class="muted" style="margin-top:10px">Already have an account?
+        <span class="link" onclick="togglePanels()">Login</span>
+      </p>
+      <p id="signupMsg" class="muted"></p>
+    </div>
+
+    <div class="panel right" id="loginPanel">
+      <h2>Login</h2>
+      <p class="muted">Login with your email</p>
+
+      <!-- Use a form for better accessibility; submit triggers handleLogin -->
+      <form id="loginForm" onsubmit="handleLogin(event)" style="display:flex;flex-direction:column;">
+        <input id="loginEmail" placeholder="Email" required />
+        <input id="loginPass" type="password" placeholder="Password" required />
+        <!-- THIS IS THE SIGN IN BUTTON — should always be visible -->
+        <button class="btn" id="loginBtn" type="submit">Sign In</button>
+        <p id="loginMsg" class="muted"></p>
+      </form>
+
+      <p class="muted" style="margin-top:8px">Don't have account?
+        <span class="link" onclick="togglePanels()">Create account</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs (v8) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+  <script>
+    // --- Firebase config: ensure storageBucket is correct (usually yourproject.appspot.com)
+    const firebaseConfig = {
+      apiKey: "AIzaSyAwRT7JwLOXgpaA2qCfGKr2b6-yugEFryY",
+      authDomain: "theassignments-2a79c.firebaseapp.com",
+      projectId: "theassignments-2a79c",
+      storageBucket: "theassignments-2a79c.appspot.com", // <-- check this value
+      messagingSenderId: "32847781306",
+      appId: "1:32847781306:web:875c3579275afa00e49183",
+      measurementId: "G-TGCREW4P5R"
+    };
+
+    // Initialize Firebase (wrapped in try/catch so init errors don't break UI)
+    try{
+      firebase.initializeApp(firebaseConfig);
+    }catch(e){
+      console.warn('Firebase init warning:', e);
+    }
+    const auth = firebase.auth ? firebase.auth() : null;
+    const db = firebase.firestore ? firebase.firestore() : null;
+
+    // Toggle panels (signup/login) for small screens
+    function togglePanels(){
+      const box = document.getElementById('box');
+      // On small screens, we switch order; on desktop we keep both visible
+      if(window.innerWidth <= 800){
+        // swap panels by toggling a class or simple display
+        const s = document.getElementById('signupPanel');
+        const l = document.getElementById('loginPanel');
+        if(s.style.display === 'none'){
+          s.style.display = 'flex';
+          l.style.display = 'flex';
+        }else{
+          // hide signup and show login (or vice versa) — simple toggle
+          if(getComputedStyle(l).display === 'flex' && getComputedStyle(s).display === 'flex'){
+            // hide signup to focus login
+            s.style.display = 'none';
+            l.style.display = 'flex';
+          }else{
+            s.style.display = 'flex';
+            l.style.display = 'flex';
+          }
+        }
+      }else{
+        // On desktop just focus/scroll to login
+        document.getElementById('loginPanel').scrollIntoView({behavior:'smooth', block:'center'});
+      }
+    }
+
+    // Signup handler (same as your code)
+    async function handleSignup(){
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const password = document.getElementById('password').value;
+      const address = document.getElementById('address').value.trim();
+      const msg = document.getElementById('signupMsg');
+      msg.innerText = '';
+
+      if(!name || !email || password.length < 6){ msg.innerText = 'Name, valid email and password (>=6) required.'; return; }
+
+      try{
+        if(!auth) throw new Error('Firebase Auth not initialized.');
+        const userCred = await auth.createUserWithEmailAndPassword(email, password);
+        const uid = userCred.user.uid;
+        if(db){
+          await db.collection('users').doc(uid).set({
+            name, email, phone, address, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+        msg.innerText = 'Signup successful! Redirecting to submit page...';
+        setTimeout(()=> location.href = 'submit.html', 900);
+      }catch(err){
+        msg.innerText = 'Error: ' + (err.message || err);
+        console.error(err);
+      }
+    }
+
+    // Login handler (form submit)
+    async function handleLogin(e){
+      if(e && e.preventDefault) e.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim();
+      const pw = document.getElementById('loginPass').value;
+      const msg = document.getElementById('loginMsg');
+      msg.innerText = '';
+      try{
+        if(!auth) throw new Error('Firebase Auth not initialized.');
+        await auth.signInWithEmailAndPassword(email, pw);
+        msg.innerText = 'Login successful! Redirecting...';
+        setTimeout(()=> location.href = 'submit.html', 700);
+      }catch(err){
+        msg.innerText = 'Error: ' + (err.message || err);
+        console.error(err);
+      }
+    }
+
+    // Optional: show any JS errors to console so you can paste them if still broken
+    window.onerror = function(msg, src, line, col, err){
+      console.error('Global error:', msg, 'at', src+':'+line+':'+col, err);
+    };
+
+  </script>
+</body>
+</html>
