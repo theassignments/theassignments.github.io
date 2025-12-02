@@ -15,7 +15,6 @@
     .btn{background:#2b8aef;color:white;padding:10px;border-radius:8px;border:none;cursor:pointer}
     .small{font-size:13px;color:#6b7280}
     .ad{background:#fff7f0;border-radius:8px;padding:12px;border:1px dashed #ffd2a6;margin-top:10px;text-align:center}
-    .orders{margin-top:16px}
     .order{padding:10px;border-radius:8px;background:#fff;border:1px solid #eef2f8;margin-bottom:10px}
     @media(max-width:800px){.row{flex-direction:column}}
   </style>
@@ -30,10 +29,9 @@
       </div>
     </div>
 
-    <p class="small">Detailed instructions de — jitna clear hoga utna accha result milega.</p>
-
     <form id="submitForm" onsubmit="submitOrder(event)">
-      <input id="title" placeholder="Assignment title (eg: Microeconomics Assignment chapter 3)" required />
+      <input id="title" placeholder="Assignment title" required />
+
       <div class="row">
         <div class="col">
           <select id="subject" required>
@@ -45,160 +43,137 @@
           </select>
         </div>
         <div class="col">
-          <input id="pages" type="number" placeholder="Pages (eg: 10)" />
+          <input id="pages" type="number" placeholder="Pages" />
         </div>
       </div>
 
       <label class="small">Deadline</label>
       <input id="deadline" type="datetime-local" />
 
-      <label>Detailed instructions (resources, referencing style, images etc.)</label>
-      <textarea id="instructions" rows="6" placeholder="Give full details..."></textarea>
+      <label>Detailed Instructions</label>
+      <textarea id="instructions" rows="5"></textarea>
 
-      <label>Upload files (pdf/docx/png/jpg) — max 20MB each</label>
+      <label>Upload Files</label>
       <input id="files" type="file" multiple accept=".pdf,.doc,.docx,image/*" />
 
       <div class="row">
         <div class="col">
           <select id="deliveryOpt">
-            <option value="digital">Digital Copy Only</option>
+            <option value="digital">Digital Only</option>
             <option value="home">Home Delivery</option>
             <option value="pickup">Pickup Point</option>
           </select>
         </div>
         <div class="col">
-          <input id="deliveryAddr" placeholder="Delivery address (if home delivery)" />
+          <input id="deliveryAddr" placeholder="Delivery Address" />
         </div>
       </div>
 
-      <div style="display:flex;gap:10px;align-items:center">
-        <button class="btn" type="submit">Submit Assignment</button>
-        <div class="small" id="statusText"></div>
-      </div>
-
-      <div class="ad">Ad space - Promote your tutoring service.</div>
+      <button class="btn" type="submit">Submit Assignment</button>
+      <div class="small" id="statusText"></div>
     </form>
 
-    <div class="orders">
-      <h3>Your Orders</h3>
-      <div id="ordersList" class="small">Login & submit to see your orders here.</div>
-    </div>
+    <h3>Your Orders</h3>
+    <div id="ordersList">Loading...</div>
   </div>
 
-  <!-- Firebase SDKs (v8) -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
   <script>
-    // *** Firebase config (your provided config) ***
     const firebaseConfig = {
       apiKey: "AIzaSyAwRT7JwLOXgpaA2qCfGKr2b6-yugEFryY",
       authDomain: "theassignments-2a79c.firebaseapp.com",
       projectId: "theassignments-2a79c",
       storageBucket: "theassignments-2a79c.appspot.com",
       messagingSenderId: "32847781306",
-      appId: "1:32847781306:web:875c3579275afa00e49183",
-      measurementId: "G-TGCREW4P5R"
+      appId: "1:32847781306:web:875c3579275afa00e49183"
     };
+
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
     const storage = firebase.storage();
 
-    // Auth state
-    auth.onAuthStateChanged(user => {
+    auth.onAuthStateChanged(user=>{
       if(user){
         document.getElementById('userInfo').innerText = user.email;
-        document.getElementById('btnSignOut').style.display = 'inline-block';
-        // load user's orders
+        document.getElementById('btnSignOut').style.display = "inline-block";
         loadOrders(user.uid);
       } else {
-        document.getElementById('userInfo').innerText = 'Not signed in';
-        document.getElementById('btnSignOut').style.display = 'none';
-        document.getElementById('ordersList').innerHTML = 'Login and submit your first order.';
+        location.href="login-signup.html";
       }
     });
 
-    function signOut(){ auth.signOut(); location.href='login-signup.html'; }
+    function signOut(){
+      auth.signOut();
+      location.href="login-signup.html";
+    }
 
-    // Submit order: upload files to Storage, then create order doc
     async function submitOrder(e){
       e.preventDefault();
       const user = auth.currentUser;
-      if(!user){ alert('Please login first (login-signup.html).'); location.href='login-signup.html'; return; }
+      const files = document.getElementById("files").files;
+      const uploadedFiles = [];
+      const path = "orders/" + user.uid + "/" + Date.now();
 
-      const title = document.getElementById('title').value.trim();
-      const subject = document.getElementById('subject').value;
-      const pages = document.getElementById('pages').value || null;
-      const deadline = document.getElementById('deadline').value || null;
-      const instructions = document.getElementById('instructions').value.trim();
-      const deliveryOpt = document.getElementById('deliveryOpt').value;
-      const deliveryAddr = document.getElementById('deliveryAddr').value.trim();
-      const filesInput = document.getElementById('files');
-      const files = filesInput.files;
-
-      if(!title || !subject){ alert('Please provide title and subject.'); return; }
-
-      document.getElementById('statusText').innerText = 'Uploading files...';
-
-      try{
-        const uploadedFiles = [];
-        const basePath = `orders/${user.uid}/${Date.now()}`;
-        for(let i=0;i<files.length;i++){
-          const f = files[i];
-          const ref = storage.ref().child(`${basePath}/${encodeURIComponent(f.name)}`);
-          const snap = await ref.put(f);
-          const url = await snap.ref.getDownloadURL();
-          uploadedFiles.push({name: f.name, url, size: f.size});
-        }
-
-        // Create order document
-        const orderData = {
-          userId: user.uid,
-          userEmail: user.email || null,
-          title, subject, pages: pages ? Number(pages) : null,
-          deadline: deadline ? new Date(deadline) : null,
-          instructions,
-          deliveryOpt, deliveryAddr,
-          files: uploadedFiles,
-          status: 'received',
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        const docRef = await db.collection('orders').add(orderData);
-        document.getElementById('statusText').innerText = 'Order submitted! Order ID: ' + docRef.id;
-        // reset form
-        document.getElementById('submitForm').reset();
-      }catch(err){
-        console.error(err);
-        document.getElementById('statusText').innerText = 'Error: ' + err.message;
+      for(let file of files){
+        const ref = storage.ref(path + "/" + file.name);
+        const snap = await ref.put(file);
+        const url = await snap.ref.getDownloadURL();
+        uploadedFiles.push({name:file.name, url:url});
       }
-    }
 
-    // Load orders for current user (real-time)
-    function loadOrders(uid){
-      const q = db.collection('orders').where('userId','==',uid).orderBy('createdAt','desc');
-      q.onSnapshot(snapshot => {
-        const list = document.getElementById('ordersList');
-        list.innerHTML = '';
-        if(snapshot.empty){ list.innerHTML = 'No orders yet.'; return; }
-        snapshot.forEach(doc => {
-          const o = doc.data();
-          const created = o.createdAt ? (o.createdAt.toDate ? o.createdAt.toDate().toLocaleString() : o.createdAt) : '';
-          const div = document.createElement('div');
-          div.className = 'order';
-          div.innerHTML = `<strong>${o.title}</strong> <div style="color:#6b7280;font-size:13px">Status: ${o.status} • ${created}</div>
-                          <div style="margin-top:6px;color:#374151;font-size:14px">${o.subject} • Pages: ${o.pages || '-'} • Delivery: ${o.deliveryOpt}</div>
-                          ${o.files && o.files.length ? `<div style="margin-top:8px"><em>Files:</em> ${o.files.map(f=>`<a href="${f.url}" target="_blank">${escapeHtml(f.name)}</a>`).join(' • ')}</div>` : ''}`;
-          list.appendChild(div);
-        });
-      }, err => {
-        document.getElementById('ordersList').innerText = 'Could not load orders: ' + err.message;
+      await db.collection("orders").add({
+        userId: user.uid,
+        userEmail: user.email,
+        title: document.getElementById("title").value,
+        subject: document.getElementById("subject").value,
+        pages: Number(document.getElementById("pages").value),
+        deadline: document.getElementById("deadline").value,
+        instructions: document.getElementById("instructions").value,
+        deliveryOpt: document.getElementById("deliveryOpt").value,
+        deliveryAddr: document.getElementById("deliveryAddr").value,
+        files: uploadedFiles,
+        status: "received",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
+
+      alert("Order Submitted!");
+      document.getElementById("submitForm").reset();
     }
 
-    function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function loadOrders(uid){
+      db.collection("orders")
+        .where("userId","==",uid)
+        .orderBy("createdAt","desc")
+        .onSnapshot(snap=>{
+          const list = document.getElementById("ordersList");
+          list.innerHTML="";
+
+          snap.forEach(doc=>{
+            const o = doc.data();
+
+            const finalFile = o.solutionFileURL 
+              ? `<div><strong>Completed File:</strong> <a target="_blank" href="${o.solutionFileURL}">Download</a></div>`
+              : "";
+
+            list.innerHTML += `
+              <div class="order">
+                <strong>${o.title}</strong>
+                <div>Status: ${o.status}</div>
+                <div>Subject: ${o.subject}</div>
+                <div>Pages: ${o.pages || '-'}</div>
+                <div>Delivery: ${o.deliveryOpt}</div>
+                ${finalFile}
+              </div>
+            `;
+          });
+        });
+    }
   </script>
 </body>
 </html>
