@@ -2,26 +2,84 @@
 <html>
 <head>
   <title>Signup - The Assignments</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #e8f0fe;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .form-box {
+      background: white;
+      width: 350px;
+      padding: 35px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    input {
+      width: 90%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #aaa;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #4CAF50;
+      border: none;
+      color: white;
+      font-size: 16px;
+      border-radius: 8px;
+      margin-top: 15px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.85;
+    }
+
+    a {
+      display: block;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+  </style>
+
 </head>
 <body>
 
-<h2>Create Account</h2>
+<div class="form-box">
+  <h2>Create Account</h2>
 
-<input type="email" id="email" placeholder="Enter Email"><br><br>
-<input type="password" id="password" placeholder="Enter Password"><br><br>
+  <input type="email" id="email" placeholder="Enter Email">
+  <input type="password" id="password" placeholder="Enter Password">
 
-<button id="signupBtn">Signup</button>
+  <button id="signupBtn">Signup</button>
 
-<br><br>
-<a href="login.html">Already have an account? Login</a>
+  <a href="login.html">Already have an account? Login</a>
+</div>
 
 <script type="module">
-  // Import Firebase SDK
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword } 
   from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
 
-  // UPDATED Firebase Config
   const firebaseConfig = {
     apiKey: "AIzaSyAwRT7JwLOXgpaA2qCfGKr2b6-yugEFryY",
     authDomain: "theassignments-2a79c.firebaseapp.com",
@@ -32,11 +90,9 @@
     measurementId: "G-TGCREW4P5R"
   };
 
-  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
 
-  // Signup Button Click Event
   document.getElementById("signupBtn").addEventListener("click", () => {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
@@ -44,11 +100,9 @@
     createUserWithEmailAndPassword(auth, email, password)
       .then(() => {
         alert("Signup Successful!");
-        window.location.href = "login.html"; // Redirect to login page
+        window.location.href = "login.html";
       })
-      .catch(error => {
-        alert(error.message);
-      });
+      .catch(error => alert(error.message));
   });
 </script>
 
