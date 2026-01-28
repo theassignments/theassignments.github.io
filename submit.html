@@ -25,12 +25,12 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid #e6eef8}
     <h2>Submit Your Assignment</h2>
     <div>
       <span id="userInfo" class="small"></span>
-      <button id="btnSignOut" class="btn" style="display:none" onclick="signOut()">Sign out</button>
+      <button id="btnSignOut" class="btn" style="display:none">Sign out</button>
     </div>
   </div>
 
-  <!-- SUBMIT FORM -->
-  <form id="submitForm" onsubmit="submitOrder(event)">
+  <!-- FORM (NO onsubmit here) -->
+  <form id="submitForm">
     <input id="title" placeholder="Assignment title" required>
 
     <div class="row">
@@ -70,20 +70,22 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid #e6eef8}
       </div>
     </div>
 
-    <button class="btn" type="submit">Submit Assignment</button>
+    <button id="submitBtn" class="btn" type="submit">Submit Assignment</button>
+    <div id="statusText" class="small"></div>
   </form>
 
   <h3>Your Orders</h3>
   <div id="ordersList">Loading...</div>
 </div>
 
-<!-- FIREBASE SDKs -->
+<!-- FIREBASE SDKs (v8 – NON MODULE, SAFE) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
 <script>
+/* 🔥 FIREBASE INIT */
 firebase.initializeApp({
   apiKey: "AIzaSyAwRT7JwLOXgpaA2qCfGKr2b6-yugEFryY",
   authDomain: "theassignments-2a79c.firebaseapp.com",
@@ -95,55 +97,80 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-/* AUTH CHECK */
+/* 🔐 AUTH CHECK */
 auth.onAuthStateChanged(user=>{
-  if(!user) return location.href="login-signup.html";
+  if(!user){
+    location.href="login-signup.html";
+    return;
+  }
   userInfo.innerText = user.email;
   btnSignOut.style.display="inline-block";
   loadOrders(user.uid);
 });
 
-function signOut(){
+btnSignOut.onclick = ()=>{
   auth.signOut();
   location.href="login-signup.html";
-}
+};
 
-/* SUBMIT ORDER */
+/* ✅ FORM SUBMIT HANDLER (THIS FIXES YOUR CLICK ISSUE) */
+document.getElementById("submitForm")
+  .addEventListener("submit", submitOrder);
+
 async function submitOrder(e){
   e.preventDefault();
+
   const user = auth.currentUser;
-
-  const uploadedFiles=[];
-  const files=document.getElementById("files").files;
-  const basePath="orders/"+user.uid+"/"+Date.now();
-
-  for(let f of files){
-    const ref=storage.ref(basePath+"/"+f.name);
-    const snap=await ref.put(f);
-    const url=await snap.ref.getDownloadURL();
-    uploadedFiles.push({name:f.name,url});
+  if(!user){
+    alert("Not logged in");
+    return;
   }
 
-  await db.collection("orders").add({
-    userId:user.uid,
-    userEmail:user.email,
-    title:title.value,
-    subject:subject.value,
-    pages:pages.value || null,
-    deadline:deadline.value || null,
-    instructions:instructions.value || null,
-    deliveryOpt:deliveryOpt.value,
-    deliveryAddr:deliveryAddr.value || null,
-    files:uploadedFiles,
-    status:"received",
-    createdAt:firebase.firestore.FieldValue.serverTimestamp()
-  });
+  submitBtn.disabled = true;
+  submitBtn.innerText = "Submitting...";
+  statusText.innerText = "Uploading & saving order...";
 
-  submitForm.reset();
-  alert("Order submitted successfully!");
+  try{
+    const uploadedFiles = [];
+    const files = document.getElementById("files").files;
+    const basePath = "orders/" + user.uid + "/" + Date.now();
+
+    for(let f of files){
+      const ref = storage.ref(basePath + "/" + f.name);
+      const snap = await ref.put(f);
+      const url = await snap.ref.getDownloadURL();
+      uploadedFiles.push({name:f.name, url});
+    }
+
+    await db.collection("orders").add({
+      userId: user.uid,
+      userEmail: user.email,
+      title: title.value,
+      subject: subject.value,
+      pages: pages.value || null,
+      deadline: deadline.value || null,
+      instructions: instructions.value || null,
+      deliveryOpt: deliveryOpt.value,
+      deliveryAddr: deliveryAddr.value || null,
+      files: uploadedFiles,
+      status: "received",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    submitForm.reset();
+    alert("Order submitted successfully ✅");
+
+  }catch(err){
+    console.error(err);
+    alert("Error: " + err.message);
+  }
+
+  submitBtn.disabled = false;
+  submitBtn.innerText = "Submit Assignment";
+  statusText.innerText = "";
 }
 
-/* LOAD USER ORDERS */
+/* 📦 LOAD USER ORDERS */
 function loadOrders(uid){
   db.collection("orders")
     .where("userId","==",uid)
@@ -156,14 +183,14 @@ function loadOrders(uid){
       }
 
       snap.forEach(doc=>{
-        const o=doc.data();
+        const o = doc.data();
 
         let filesHTML="";
         if(o.files && o.files.length){
           filesHTML=o.files.map(f=>`<a target="_blank" href="${f.url}">${f.name}</a>`).join(", ");
         }
 
-        let finalFile=o.solutionFileURL
+        let finalFile = o.solutionFileURL
           ? `<div><b>Final File:</b> <a target="_blank" href="${o.solutionFileURL}">Download</a></div>`
           : "";
 
@@ -174,12 +201,9 @@ function loadOrders(uid){
             <div><b>Subject:</b> ${o.subject}</div>
             <div><b>Pages:</b> ${o.pages || "-"}</div>
             <div><b>Deadline:</b> ${o.deadline || "-"}</div>
-
             <div><b>Instructions:</b><br><small>${o.instructions || "-"}</small></div>
-
             <div><b>Delivery:</b> ${o.deliveryOpt}</div>
             ${o.deliveryAddr ? `<div><b>Address:</b> ${o.deliveryAddr}</div>` : ""}
-
             ${filesHTML ? `<div><b>Your Files:</b> ${filesHTML}</div>` : ""}
             ${finalFile}
           </div>
