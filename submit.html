@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="hi">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Submit Assignment — TheAssignment</title>
 
 <style>
@@ -13,8 +13,9 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid #e6eef8}
 .row{display:flex;gap:10px}
 .col{flex:1}
 .btn{background:#2b8aef;color:#fff;padding:10px;border:none;border-radius:8px;cursor:pointer}
-.order{border:1px solid #eef2f8;padding:10px;border-radius:8px;margin-bottom:10px}
+.order{border:1px solid #eef2f8;padding:12px;border-radius:8px;margin-bottom:12px}
 .small{font-size:13px;color:#6b7280}
+@media(max-width:800px){.row{flex-direction:column}}
 </style>
 </head>
 
@@ -28,8 +29,10 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid #e6eef8}
     </div>
   </div>
 
+  <!-- SUBMIT FORM -->
   <form id="submitForm" onsubmit="submitOrder(event)">
-    <input id="title" placeholder="Assignment title" required />
+    <input id="title" placeholder="Assignment title" required>
+
     <div class="row">
       <div class="col">
         <select id="subject" required>
@@ -37,19 +40,35 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid #e6eef8}
           <option>Economics</option>
           <option>Computer Science</option>
           <option>Business</option>
+          <option>Physics</option>
         </select>
       </div>
       <div class="col">
-        <input id="pages" type="number" placeholder="Pages" />
+        <input id="pages" type="number" placeholder="Pages">
       </div>
     </div>
 
-    <textarea id="instructions" rows="4" placeholder="Instructions"></textarea>
+    <label class="small">Deadline</label>
+    <input id="deadline" type="datetime-local">
 
-    <select id="deliveryOpt">
-      <option value="digital">Digital Only</option>
-      <option value="home">Home Delivery</option>
-    </select>
+    <label class="small">Detailed Instructions</label>
+    <textarea id="instructions" rows="4"></textarea>
+
+    <label class="small">Upload Files</label>
+    <input id="files" type="file" multiple>
+
+    <div class="row">
+      <div class="col">
+        <select id="deliveryOpt">
+          <option value="digital">Digital Only</option>
+          <option value="home">Home Delivery</option>
+          <option value="pickup">Pickup Point</option>
+        </select>
+      </div>
+      <div class="col">
+        <input id="deliveryAddr" placeholder="Delivery Address">
+      </div>
+    </div>
 
     <button class="btn" type="submit">Submit Assignment</button>
   </form>
@@ -58,25 +77,29 @@ input,textarea,select{padding:10px;border-radius:8px;border:1px solid #e6eef8}
   <div id="ordersList">Loading...</div>
 </div>
 
-<!-- Firebase -->
+<!-- FIREBASE SDKs -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
 <script>
 firebase.initializeApp({
   apiKey: "AIzaSyAwRT7JwLOXgpaA2qCfGKr2b6-yugEFryY",
   authDomain: "theassignments-2a79c.firebaseapp.com",
-  projectId: "theassignments-2a79c"
+  projectId: "theassignments-2a79c",
+  storageBucket: "theassignments-2a79c.appspot.com"
 });
 
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage();
 
+/* AUTH CHECK */
 auth.onAuthStateChanged(user=>{
   if(!user) return location.href="login-signup.html";
-  document.getElementById("userInfo").innerText = user.email;
-  document.getElementById("btnSignOut").style.display="inline-block";
+  userInfo.innerText = user.email;
+  btnSignOut.style.display="inline-block";
   loadOrders(user.uid);
 });
 
@@ -85,52 +108,83 @@ function signOut(){
   location.href="login-signup.html";
 }
 
+/* SUBMIT ORDER */
 async function submitOrder(e){
   e.preventDefault();
   const user = auth.currentUser;
 
+  const uploadedFiles=[];
+  const files=document.getElementById("files").files;
+  const basePath="orders/"+user.uid+"/"+Date.now();
+
+  for(let f of files){
+    const ref=storage.ref(basePath+"/"+f.name);
+    const snap=await ref.put(f);
+    const url=await snap.ref.getDownloadURL();
+    uploadedFiles.push({name:f.name,url});
+  }
+
   await db.collection("orders").add({
-    userId: user.uid,
-    userEmail: user.email,
-    title: title.value,
-    subject: subject.value,
-    pages: pages.value || null,
-    deliveryOpt: deliveryOpt.value,
-    status: "received",
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    userId:user.uid,
+    userEmail:user.email,
+    title:title.value,
+    subject:subject.value,
+    pages:pages.value || null,
+    deadline:deadline.value || null,
+    instructions:instructions.value || null,
+    deliveryOpt:deliveryOpt.value,
+    deliveryAddr:deliveryAddr.value || null,
+    files:uploadedFiles,
+    status:"received",
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
 
   submitForm.reset();
   alert("Order submitted successfully!");
 }
 
+/* LOAD USER ORDERS */
 function loadOrders(uid){
   db.collection("orders")
     .where("userId","==",uid)
     .orderBy("createdAt","desc")
     .onSnapshot(snap=>{
-      const list = document.getElementById("ordersList");
-      list.innerHTML = "";
-
+      ordersList.innerHTML="";
       if(snap.empty){
-        list.innerHTML = "<p class='small'>No orders yet</p>";
+        ordersList.innerHTML="<p class='small'>No orders yet</p>";
         return;
       }
 
       snap.forEach(doc=>{
-        const o = doc.data();
-        list.innerHTML += `
+        const o=doc.data();
+
+        let filesHTML="";
+        if(o.files && o.files.length){
+          filesHTML=o.files.map(f=>`<a target="_blank" href="${f.url}">${f.name}</a>`).join(", ");
+        }
+
+        let finalFile=o.solutionFileURL
+          ? `<div><b>Final File:</b> <a target="_blank" href="${o.solutionFileURL}">Download</a></div>`
+          : "";
+
+        ordersList.innerHTML+=`
           <div class="order">
-            <strong>${o.title}</strong><br>
-            Subject: ${o.subject}<br>
-            Status: ${o.status}
+            <strong>${o.title}</strong>
+            <div><b>Status:</b> ${o.status}</div>
+            <div><b>Subject:</b> ${o.subject}</div>
+            <div><b>Pages:</b> ${o.pages || "-"}</div>
+            <div><b>Deadline:</b> ${o.deadline || "-"}</div>
+
+            <div><b>Instructions:</b><br><small>${o.instructions || "-"}</small></div>
+
+            <div><b>Delivery:</b> ${o.deliveryOpt}</div>
+            ${o.deliveryAddr ? `<div><b>Address:</b> ${o.deliveryAddr}</div>` : ""}
+
+            ${filesHTML ? `<div><b>Your Files:</b> ${filesHTML}</div>` : ""}
+            ${finalFile}
           </div>
         `;
       });
-    }, err=>{
-      document.getElementById("ordersList").innerHTML =
-        "<p class='small'>Loading failed. Please refresh.</p>";
-      console.error(err);
     });
 }
 </script>
