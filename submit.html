@@ -1,179 +1,138 @@
- <!doctype html>
+<!doctype html>
 <html lang="hi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Submit Assignment — TheAssignment</title>
-  <style>
-    body{margin:0;font-family:Inter,Arial;background:#f5f7fb;color:#111;padding:18px}
-    .wrap{max-width:1000px;margin:12px auto;background:white;padding:18px;border-radius:12px;box-shadow:0 10px 30px rgba(10,20,40,0.04)}
-    h2{margin-top:0}
-    form{display:grid;gap:10px}
-    input,textarea,select{padding:10px;border-radius:8px;border:1px solid #e6eef8}
-    .row{display:flex;gap:10px}
-    .col{flex:1}
-    .btn{background:#2b8aef;color:white;padding:10px;border-radius:8px;border:none;cursor:pointer}
-    .small{font-size:13px;color:#6b7280}
-    .ad{background:#fff7f0;border-radius:8px;padding:12px;border:1px dashed #ffd2a6;margin-top:10px;text-align:center}
-    .order{padding:10px;border-radius:8px;background:#fff;border:1px solid #eef2f8;margin-bottom:10px}
-    @media(max-width:800px){.row{flex-direction:column}}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Submit Assignment — TheAssignment</title>
+
+<style>
+body{margin:0;font-family:Inter,Arial;background:#f5f7fb;padding:18px}
+.wrap{max-width:1000px;margin:auto;background:#fff;padding:18px;border-radius:12px}
+form{display:grid;gap:10px}
+input,textarea,select{padding:10px;border-radius:8px;border:1px solid #e6eef8}
+.row{display:flex;gap:10px}
+.col{flex:1}
+.btn{background:#2b8aef;color:#fff;padding:10px;border:none;border-radius:8px;cursor:pointer}
+.order{border:1px solid #eef2f8;padding:10px;border-radius:8px;margin-bottom:10px}
+.small{font-size:13px;color:#6b7280}
+</style>
 </head>
+
 <body>
-  <div class="wrap">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <h2>Submit Your Assignment</h2>
-      <div>
-        <span id="userInfo" class="small"></span>
-        <button id="btnSignOut" style="display:none;margin-left:10px" class="btn" onclick="signOut()">Sign out</button>
+<div class="wrap">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <h2>Submit Your Assignment</h2>
+    <div>
+      <span id="userInfo" class="small"></span>
+      <button id="btnSignOut" class="btn" style="display:none" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+
+  <form id="submitForm" onsubmit="submitOrder(event)">
+    <input id="title" placeholder="Assignment title" required />
+    <div class="row">
+      <div class="col">
+        <select id="subject" required>
+          <option value="">Select Subject</option>
+          <option>Economics</option>
+          <option>Computer Science</option>
+          <option>Business</option>
+        </select>
+      </div>
+      <div class="col">
+        <input id="pages" type="number" placeholder="Pages" />
       </div>
     </div>
 
-    <form id="submitForm" onsubmit="submitOrder(event)">
-      <input id="title" placeholder="Assignment title" required />
+    <textarea id="instructions" rows="4" placeholder="Instructions"></textarea>
 
-      <div class="row">
-        <div class="col">
-          <select id="subject" required>
-            <option value="">Select Subject</option>
-            <option>Economics</option>
-            <option>Computer Science</option>
-            <option>Business</option>
-            <option>Physics</option>
-          </select>
-        </div>
-        <div class="col">
-          <input id="pages" type="number" placeholder="Pages" />
-        </div>
-      </div>
+    <select id="deliveryOpt">
+      <option value="digital">Digital Only</option>
+      <option value="home">Home Delivery</option>
+    </select>
 
-      <label class="small">Deadline</label>
-      <input id="deadline" type="datetime-local" />
+    <button class="btn" type="submit">Submit Assignment</button>
+  </form>
 
-      <label>Detailed Instructions</label>
-      <textarea id="instructions" rows="5"></textarea>
+  <h3>Your Orders</h3>
+  <div id="ordersList">Loading...</div>
+</div>
 
-      <label>Upload Files</label>
-      <input id="files" type="file" multiple accept=".pdf,.doc,.docx,image/*" />
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-      <div class="row">
-        <div class="col">
-          <select id="deliveryOpt">
-            <option value="digital">Digital Only</option>
-            <option value="home">Home Delivery</option>
-            <option value="pickup">Pickup Point</option>
-          </select>
-        </div>
-        <div class="col">
-          <input id="deliveryAddr" placeholder="Delivery Address" />
-        </div>
-      </div>
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyAwRT7JwLOXgpaA2qCfGKr2b6-yugEFryY",
+  authDomain: "theassignments-2a79c.firebaseapp.com",
+  projectId: "theassignments-2a79c"
+});
 
-      <button class="btn" type="submit">Submit Assignment</button>
-      <div class="small" id="statusText"></div>
-    </form>
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-    <h3>Your Orders</h3>
-    <div id="ordersList">Loading...</div>
-  </div>
+auth.onAuthStateChanged(user=>{
+  if(!user) return location.href="login-signup.html";
+  document.getElementById("userInfo").innerText = user.email;
+  document.getElementById("btnSignOut").style.display="inline-block";
+  loadOrders(user.uid);
+});
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+function signOut(){
+  auth.signOut();
+  location.href="login-signup.html";
+}
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAwRT7JwLOXgpaA2qCfGKr2b6-yugEFryY",
-      authDomain: "theassignments-2a79c.firebaseapp.com",
-      projectId: "theassignments-2a79c",
-      storageBucket: "theassignments-2a79c.appspot.com",
-      messagingSenderId: "32847781306",
-      appId: "1:32847781306:web:875c3579275afa00e49183"
-    };
+async function submitOrder(e){
+  e.preventDefault();
+  const user = auth.currentUser;
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const storage = firebase.storage();
+  await db.collection("orders").add({
+    userId: user.uid,
+    userEmail: user.email,
+    title: title.value,
+    subject: subject.value,
+    pages: pages.value || null,
+    deliveryOpt: deliveryOpt.value,
+    status: "received",
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
 
-    auth.onAuthStateChanged(user=>{
-      if(user){
-        document.getElementById('userInfo').innerText = user.email;
-        document.getElementById('btnSignOut').style.display = "inline-block";
-        loadOrders(user.uid);
-      } else {
-        location.href="login-signup.html";
-      }
-    });
+  submitForm.reset();
+  alert("Order submitted successfully!");
+}
 
-    function signOut(){
-      auth.signOut();
-      location.href="login-signup.html";
-    }
+function loadOrders(uid){
+  db.collection("orders")
+    .where("userId","==",uid)
+    .orderBy("createdAt","desc")
+    .onSnapshot(snap=>{
+      const list = document.getElementById("ordersList");
+      list.innerHTML = "";
 
-    async function submitOrder(e){
-      e.preventDefault();
-      const user = auth.currentUser;
-      const files = document.getElementById("files").files;
-      const uploadedFiles = [];
-      const path = "orders/" + user.uid + "/" + Date.now();
-
-      for(let file of files){
-        const ref = storage.ref(path + "/" + file.name);
-        const snap = await ref.put(file);
-        const url = await snap.ref.getDownloadURL();
-        uploadedFiles.push({name:file.name, url:url});
+      if(snap.empty){
+        list.innerHTML = "<p class='small'>No orders yet</p>";
+        return;
       }
 
-      await db.collection("orders").add({
-        userId: user.uid,
-        userEmail: user.email,
-        title: document.getElementById("title").value,
-        subject: document.getElementById("subject").value,
-        pages: Number(document.getElementById("pages").value),
-        deadline: document.getElementById("deadline").value,
-        instructions: document.getElementById("instructions").value,
-        deliveryOpt: document.getElementById("deliveryOpt").value,
-        deliveryAddr: document.getElementById("deliveryAddr").value,
-        files: uploadedFiles,
-        status: "received",
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      snap.forEach(doc=>{
+        const o = doc.data();
+        list.innerHTML += `
+          <div class="order">
+            <strong>${o.title}</strong><br>
+            Subject: ${o.subject}<br>
+            Status: ${o.status}
+          </div>
+        `;
       });
-
-      alert("Order Submitted!");
-      document.getElementById("submitForm").reset();
-    }
-
-    function loadOrders(uid){
-      db.collection("orders")
-        .where("userId","==",uid)
-        .orderBy("createdAt","desc")
-        .onSnapshot(snap=>{
-          const list = document.getElementById("ordersList");
-          list.innerHTML="";
-
-          snap.forEach(doc=>{
-            const o = doc.data();
-
-            const finalFile = o.solutionFileURL 
-              ? `<div><strong>Completed File:</strong> <a target="_blank" href="${o.solutionFileURL}">Download</a></div>`
-              : "";
-
-            list.innerHTML += `
-              <div class="order">
-                <strong>${o.title}</strong>
-                <div>Status: ${o.status}</div>
-                <div>Subject: ${o.subject}</div>
-                <div>Pages: ${o.pages || '-'}</div>
-                <div>Delivery: ${o.deliveryOpt}</div>
-                ${finalFile}
-              </div>
-            `;
-          });
-        });
-    }
-  </script>
+    }, err=>{
+      document.getElementById("ordersList").innerHTML =
+        "<p class='small'>Loading failed. Please refresh.</p>";
+      console.error(err);
+    });
+}
+</script>
 </body>
 </html>
