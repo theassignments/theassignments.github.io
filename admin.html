@@ -1,4 +1,4 @@
-<!doctype html>
+ <!doctype html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -12,7 +12,7 @@ body{
   padding:20px;
 }
 .wrap{
-  max-width:1000px;
+  max-width:1100px;
   margin:auto;
   background:#fff;
   padding:20px;
@@ -30,7 +30,8 @@ body{
   border-radius:6px;
   cursor:pointer;
   margin-right:5px;
-  margin-top:5px;
+  margin-top:6px;
+  font-size:13px;
 }
 .received{background:#e0f2fe;}
 .progress{background:#fef9c3;}
@@ -44,6 +45,7 @@ body{
   border:none;
   cursor:pointer;
 }
+.small{font-size:13px;color:#555}
 </style>
 </head>
 
@@ -64,20 +66,19 @@ body{
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
 <script>
-const firebaseConfig = {
+/* 🔥 Firebase Init */
+firebase.initializeApp({
   apiKey: "AIzaSyAwRT7JwLOXgpaA2qCfGKr2b6-yugEFryY",
   authDomain: "theassignments-2a79c.firebaseapp.com",
   projectId: "theassignments-2a79c"
-};
-
-firebase.initializeApp(firebaseConfig);
+});
 
 const auth = firebase.auth();
 const db = firebase.firestore();
 
 const ADMIN_EMAIL = "theassignment.admin@gmail.com";
 
-/* 🔐 Admin Auth Check */
+/* 🔐 Admin Auth */
 auth.onAuthStateChanged(user=>{
   if(!user){
     location.href="login-signup.html";
@@ -88,8 +89,7 @@ auth.onAuthStateChanged(user=>{
     location.href="submit.html";
     return;
   }
-  document.getElementById("adminInfo").innerText =
-    "Logged in as: " + user.email;
+  adminInfo.innerText = "Logged in as: " + user.email;
   loadOrders();
 });
 
@@ -98,42 +98,79 @@ function logout(){
   location.href="login-signup.html";
 }
 
-/* 📦 Load Orders */
+/* 📦 Load ALL Orders */
 function loadOrders(){
-  db.collection("orders").onSnapshot(snapshot=>{
-    const list=document.getElementById("ordersList");
-    list.innerHTML="";
+  db.collection("orders")
+    .orderBy("createdAt","desc")
+    .onSnapshot(snapshot=>{
+      ordersList.innerHTML="";
 
-    if(snapshot.empty){
-      list.innerHTML="<p>No orders found</p>";
-      return;
-    }
+      if(snapshot.empty){
+        ordersList.innerHTML="<p>No orders found</p>";
+        return;
+      }
 
-    snapshot.forEach(doc=>{
-      const o=doc.data();
-      const div=document.createElement("div");
-      div.className="order";
+      snapshot.forEach(doc=>{
+        const o = doc.data();
+        const div = document.createElement("div");
+        div.className="order";
 
-      div.innerHTML=`
-        <b>Title:</b> ${o.title}<br>
-        <b>Subject:</b> ${o.subject}<br>
-        <b>User:</b> ${o.userEmail}<br>
-        <b>Delivery:</b> ${o.delivery}<br>
-        <b>Status:</b> ${o.status}<br><br>
+        /* user files */
+        let userFiles="";
+        if(o.files && o.files.length){
+          userFiles = o.files.map(f =>
+            `<a target="_blank" href="${f.url}">${f.name}</a>`
+          ).join(", ");
+        }
 
-        <button class="btn received" onclick="updateStatus('${doc.id}','received')">Received</button>
-        <button class="btn progress" onclick="updateStatus('${doc.id}','in_progress')">In Progress</button>
-        <button class="btn completed" onclick="updateStatus('${doc.id}','completed')">Completed</button>
-        <button class="btn delivered" onclick="updateStatus('${doc.id}','delivered')">Delivered</button>
-      `;
-      list.appendChild(div);
+        /* final file */
+        let finalFile = o.solutionFileURL
+          ? `<div><b>Final File:</b>
+               <a target="_blank" href="${o.solutionFileURL}">Download</a>
+             </div>`
+          : "";
+
+        div.innerHTML = `
+          <b>Title:</b> ${o.title}<br>
+          <b>Subject:</b> ${o.subject}<br>
+          <b>User:</b> ${o.userEmail}<br>
+
+          <div><b>Pages:</b> ${o.pages || "-"}</div>
+          <div><b>Deadline:</b> ${o.deadline || "-"}</div>
+
+          <div class="small" style="margin-top:6px">
+            <b>Instructions:</b><br>
+            ${o.instructions || "-"}
+          </div>
+
+          <div><b>Delivery:</b> ${o.deliveryOpt || "digital"}</div>
+          <div><b>Address:</b> ${o.deliveryAddr || "-"}</div>
+
+          ${userFiles ? `
+            <div style="margin-top:6px">
+              <b>User Files:</b> ${userFiles}
+            </div>` : ""}
+
+          ${finalFile}
+
+          <div style="margin-top:8px"><b>Status:</b> ${o.status}</div>
+
+          <div style="margin-top:10px">
+            <button class="btn received" onclick="updateStatus('${doc.id}','received')">Received</button>
+            <button class="btn progress" onclick="updateStatus('${doc.id}','in_progress')">In Progress</button>
+            <button class="btn completed" onclick="updateStatus('${doc.id}','completed')">Completed</button>
+            <button class="btn delivered" onclick="updateStatus('${doc.id}','delivered')">Delivered</button>
+          </div>
+        `;
+
+        ordersList.appendChild(div);
+      });
     });
-  });
 }
 
-/* 🔄 Update Status */
+/* 🔄 Update Order Status */
 function updateStatus(id,status){
-  db.collection("orders").doc(id).update({status});
+  db.collection("orders").doc(id).update({ status });
   alert("Status updated to " + status);
 }
 </script>
