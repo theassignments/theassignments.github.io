@@ -1,241 +1,142 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard — TheAssignment</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — TheAssignment</title>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Inter, Arial;
-      background: #f3f7fb;
-      padding: 20px;
-    }
-
-    .wrap {
-      max-width: 1100px;
-      margin: auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    }
-
-    .order {
-      background: #fff;
-      padding: 16px;
-      border-radius: 10px;
-      border: 1px solid #e5e9f0;
-      margin-bottom: 12px;
-    }
-
-    .btn {
-      padding: 6px 10px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-right: 6px;
-      margin-top: 6px;
-      font-size: 13px;
-    }
-
-    .received { background: #e0f2fe; }
-    .progress  { background: #fef9c3; }
-    .completed { background: #dcfce7; }
-    .delivered { background: #e3e0ff; }
-
-    .logout {
-      background: #ef4444;
-      color: white;
-      padding: 8px 14px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-    }
-  </style>
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background:#f3f7fb;
+  padding:20px;
+}
+.wrap{
+  max-width:1000px;
+  margin:auto;
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+}
+.order{
+  border:1px solid #ddd;
+  padding:15px;
+  border-radius:8px;
+  margin-bottom:15px;
+}
+.btn{
+  padding:6px 10px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  margin-right:5px;
+  margin-top:5px;
+}
+.received{background:#e0f2fe;}
+.progress{background:#fef9c3;}
+.completed{background:#dcfce7;}
+.delivered{background:#e3e0ff;}
+.logout{
+  background:#ef4444;
+  color:white;
+  padding:8px 14px;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+}
+</style>
 </head>
 
 <body>
 
-  <div class="wrap">
-    <h2>Admin Dashboard</h2>
-    <p id="adminInfo"></p>
+<div class="wrap">
+  <h2>Admin Dashboard</h2>
+  <p id="adminInfo"></p>
+  <button class="logout" onclick="logout()">Logout</button>
 
-    <button class="logout" onclick="logout()">Logout</button>
+  <h3>All Orders</h3>
+  <div id="ordersList">Loading orders...</div>
+</div>
 
-    <h3>All Orders</h3>
-    <div id="ordersList">Loading orders...</div>
-  </div>
+<!-- Firebase v8 SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAwRT7JwLOXgpaA2qCfGKr2b6-yugEFryY",
+  authDomain: "theassignments-2a79c.firebaseapp.com",
+  projectId: "theassignments-2a79c"
+};
 
-  <script>
-    // Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyAwRT7JwLOXgpaA2qCfGKr2b6-yugEFryY",
-      authDomain: "theassignments-2a79c.firebaseapp.com",
-      projectId: "theassignments-2a79c",
-      storageBucket: "theassignments-2a79c.appspot.com",
-      messagingSenderId: "32847781306",
-      appId: "1:32847781306:web:875c3579275afa00e49183"
-    };
+firebase.initializeApp(firebaseConfig);
 
-    firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const storage = firebase.storage();
+const ADMIN_EMAIL = "theassignment.admin@gmail.com";
 
-    // CHANGE THIS TO YOUR ADMIN EMAIL
-    const ADMIN_EMAIL = "theassignment.admin@gmail.com";
+/* 🔐 Admin Auth Check */
+auth.onAuthStateChanged(user=>{
+  if(!user){
+    location.href="login-signup.html";
+    return;
+  }
+  if(user.email !== ADMIN_EMAIL){
+    alert("Access denied");
+    location.href="submit.html";
+    return;
+  }
+  document.getElementById("adminInfo").innerText =
+    "Logged in as: " + user.email;
+  loadOrders();
+});
 
-    /* 
-       Check Admin Login 
-    */
-    auth.onAuthStateChanged(user => {
-      if(!user){
-        location.href = "login-signup.html";
-        return;
-      }
+function logout(){
+  auth.signOut();
+  location.href="login-signup.html";
+}
 
-      if(user.email !== ADMIN_EMAIL){
-        alert("Access Denied: Only admin can access this page.");
-        location.href = "submit.html";
-        return;
-      }
+/* 📦 Load Orders */
+function loadOrders(){
+  db.collection("orders").onSnapshot(snapshot=>{
+    const list=document.getElementById("ordersList");
+    list.innerHTML="";
 
-      document.getElementById("adminInfo").innerText = "Logged in as: " + user.email;
-      loadAllOrders();
+    if(snapshot.empty){
+      list.innerHTML="<p>No orders found</p>";
+      return;
+    }
+
+    snapshot.forEach(doc=>{
+      const o=doc.data();
+      const div=document.createElement("div");
+      div.className="order";
+
+      div.innerHTML=`
+        <b>Title:</b> ${o.title}<br>
+        <b>Subject:</b> ${o.subject}<br>
+        <b>User:</b> ${o.userEmail}<br>
+        <b>Delivery:</b> ${o.delivery}<br>
+        <b>Status:</b> ${o.status}<br><br>
+
+        <button class="btn received" onclick="updateStatus('${doc.id}','received')">Received</button>
+        <button class="btn progress" onclick="updateStatus('${doc.id}','in_progress')">In Progress</button>
+        <button class="btn completed" onclick="updateStatus('${doc.id}','completed')">Completed</button>
+        <button class="btn delivered" onclick="updateStatus('${doc.id}','delivered')">Delivered</button>
+      `;
+      list.appendChild(div);
     });
+  });
+}
 
-    function logout(){
-      auth.signOut();
-      location.href = "login-signup.html";
-    }
-
-    /*
-       Load All Orders (Realtime)
-    */
-    function loadAllOrders(){
-      db.collection("orders")
-        .orderBy("createdAt", "desc")
-        .onSnapshot(snapshot => {
-          const list = document.getElementById("ordersList");
-          list.innerHTML = "";
-
-          snapshot.forEach(doc => {
-            const o = doc.data();
-            const id = doc.id;
-
-            const created = o.createdAt?.toDate?.().toLocaleString() || "";
-
-            let fileLinks = "";
-            if(o.files && o.files.length){
-              fileLinks = o.files.map(f => 
-                `<a href="${f.url}" target="_blank">${f.name}</a>`
-              ).join(" • ");
-            }
-
-            let finalFile = "";
-            if(o.solutionFileURL){
-              finalFile = `
-                <div style="margin-top:8px;">
-                  <strong>Completed File:</strong>
-                  <a target="_blank" href="${o.solutionFileURL}">Download</a>
-                </div>`;
-            }
-
-            const div = document.createElement("div");
-            div.className = "order";
-
-            div.innerHTML = `
-              <strong>${o.title}</strong><br>
-              <small>${created}</small><br><br>
-
-              <div><b>Subject:</b> ${o.subject}</div>
-              <div><b>Pages:</b> ${o.pages || "-"}</div>
-              <div><b>Delivery:</b> ${o.deliveryOpt}</div>
-              <div><b>Address:</b> ${o.deliveryAddr || "-"}</div>
-
-              <div style="margin-top:6px;"><b>User:</b> ${o.userEmail}</div>
-
-              ${fileLinks ? `<div style="margin-top:6px;"><b>Files:</b> ${fileLinks}</div>` : ""}
-
-              ${finalFile}
-
-              <div style="margin-top:10px;">
-                <b>Status:</b> ${o.status}
-              </div>
-
-              <div style="margin-top:6px;">
-                <button class="btn received" onclick="updateStatus('${id}', 'received')">Received</button>
-                <button class="btn progress" onclick="updateStatus('${id}', 'in_progress')">In Progress</button>
-                <button class="btn completed" onclick="updateStatus('${id}', 'completed')">Completed</button>
-                <button class="btn delivered" onclick="updateStatus('${id}', 'delivered')">Delivered</button>
-              </div>
-
-              <div style="margin-top:10px;">
-                <label>Upload Final File:</label><br>
-                <input type="file" id="file_${id}" />
-                <button class="btn completed" onclick="uploadSolution('${id}')">Upload</button>
-              </div>
-
-              <div id="solution_${id}" style="margin-top:8px;color:#027a00;font-size:14px"></div>
-            `;
-
-            list.appendChild(div);
-          });
-        });
-    }
-
-    /*
-       Update Order Status
-    */
-    function updateStatus(orderId, status){
-      db.collection("orders").doc(orderId).update({ status });
-      alert("Status updated to: " + status);
-    }
-
-    /*
-       Upload Final Solution File
-    */
-    async function uploadSolution(orderId){
-      const fileInput = document.getElementById("file_" + orderId);
-
-      if(fileInput.files.length === 0){
-        alert("Please select a file.");
-        return;
-      }
-
-      const file = fileInput.files[0];
-      document.getElementById("solution_" + orderId).innerText = "Uploading...";
-
-      try{
-        const storageRef = storage.ref("solutions/" + orderId + "/" + file.name);
-        const snap = await storageRef.put(file);
-        const url = await snap.ref.getDownloadURL();
-
-        await db.collection("orders").doc(orderId).update({
-          solutionFileURL: url,
-          status: "completed"
-        });
-
-        document.getElementById("solution_" + orderId).innerHTML =
-          `Uploaded: <a href="${url}" target="_blank">Download</a>`;
-
-        alert("Final assignment uploaded!");
-
-      }catch(err){
-        alert("Error: " + err.message);
-      }
-    }
-
-  </script>
+/* 🔄 Update Status */
+function updateStatus(id,status){
+  db.collection("orders").doc(id).update({status});
+  alert("Status updated to " + status);
+}
+</script>
 
 </body>
 </html>
